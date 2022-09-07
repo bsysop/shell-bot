@@ -181,7 +181,7 @@ bot.command("run", function (msg, reply, next) {
     return reply.html("Use /run &lt;command&gt; to execute something.");
 
   if (msg.context.command) {
-    var command = msg.context.command;
+    var command = escape(msg.context.command);
     return reply.text("A command is already running.");
   }
 
@@ -196,82 +196,82 @@ bot.command("run", function (msg, reply, next) {
 });
 
 // Editor start
-bot.command("file", function (msg, reply, next) {
-  var args = msg.args();
-  if (!args)
-    return reply.html("Use /file &lt;file&gt; to view or edit a text file.");
+// bot.command("file", function (msg, reply, next) {
+//   var args = msg.args();
+//   if (!args)
+//     return reply.html("Use /file &lt;file&gt; to view or edit a text file.");
 
-  if (msg.context.command) {
-    var command = msg.context.command;
-    return reply.reply(command.initialMessage.id || msg).text("A command is running.");
-  }
+//   if (msg.context.command) {
+//     var command = msg.context.command;
+//     return reply.reply(command.initialMessage.id || msg).text("A command is running.");
+//   }
 
-  if (msg.editor) msg.editor.detach();
-  msg.editor = null;
+//   if (msg.editor) msg.editor.detach();
+//   msg.editor = null;
 
-  try {
-    var file = path.resolve(msg.context.cwd, args);
-    msg.context.editor = new Editor(reply, file);
-  } catch (e) {
-    reply.html("Couldn't open file: %s", e.message);
-  }
-});
+//   try {
+//     var file = path.resolve(msg.context.cwd, args);
+//     msg.context.editor = new Editor(reply, file);
+//   } catch (e) {
+//     reply.html("Couldn't open file: %s", e.message);
+//   }
+// });
 
 // Keypad
-bot.command("keypad", function (msg, reply, next) {
-  if (!msg.context.command)
-    return reply.html("No command is running.");
-  try {
-    msg.context.command.toggleKeypad();
-  } catch (e) {
-    reply.html("Couldn't toggle keypad.");
-  }
-});
+// bot.command("keypad", function (msg, reply, next) {
+//   if (!msg.context.command)
+//     return reply.html("No command is running.");
+//   try {
+//     msg.context.command.toggleKeypad();
+//   } catch (e) {
+//     reply.html("Couldn't toggle keypad.");
+//   }
+// });
 
 // File upload / download
-bot.command("upload", function (msg, reply, next) {
-  var args = msg.args();
-  if (!args)
-    return reply.html("Use /upload &lt;file&gt; and I'll send it to you");
+// bot.command("upload", function (msg, reply, next) {
+//   var args = msg.args();
+//   if (!args)
+//     return reply.html("Use /upload &lt;file&gt; and I'll send it to you");
 
-  var file = path.resolve(msg.context.cwd, args);
-  try {
-    var stream = fs.createReadStream(file);
-  } catch (e) {
-    return reply.html("Couldn't open file: %s", e.message);
-  }
+//   var file = path.resolve(msg.context.cwd, args);
+//   try {
+//     var stream = fs.createReadStream(file);
+//   } catch (e) {
+//     return reply.html("Couldn't open file: %s", e.message);
+//   }
 
-  // Catch errors but do nothing, they'll be propagated to the handler below
-  stream.on("error", function (e) {});
+//   // Catch errors but do nothing, they'll be propagated to the handler below
+//   stream.on("error", function (e) {});
 
-  reply.action("upload_document").document(stream).then(function (e, msg) {
-    if (e)
-      return reply.html("Couldn't send file: %s", e.message);
-    fileUploads[msg.id] = file;
-  });
-});
-function handleDownload(msg, reply) {
-  if (Object.hasOwnProperty.call(fileUploads, msg.reply.id))
-    var file = fileUploads[msg.reply.id];
-  else if (msg.context.lastDirMessageId == msg.reply.id)
-    var file = path.join(msg.context.cwd, msg.filename || utils.constructFilename(msg));
-  else
-    return;
+//   reply.action("upload_document").document(stream).then(function (e, msg) {
+//     if (e)
+//       return reply.html("Couldn't send file: %s", e.message);
+//     fileUploads[msg.id] = file;
+//   });
+// });
+// function handleDownload(msg, reply) {
+//   if (Object.hasOwnProperty.call(fileUploads, msg.reply.id))
+//     var file = fileUploads[msg.reply.id];
+//   else if (msg.context.lastDirMessageId == msg.reply.id)
+//     var file = path.join(msg.context.cwd, msg.filename || utils.constructFilename(msg));
+//   else
+//     return;
 
-  try {
-    var stream = fs.createWriteStream(file);
-  } catch (e) {
-    return reply.html("Couldn't write file: %s", e.message);
-  }
-  bot.fileStream(msg.file, function (err, ostream) {
-    if (err) throw err;
-    reply.action("typing");
-    ostream.pipe(stream);
-    ostream.on("end", function () {
-      reply.html("File written: %s", file);
-    });
-  });
-}
+//   try {
+//     var stream = fs.createWriteStream(file);
+//   } catch (e) {
+//     return reply.html("Couldn't write file: %s", e.message);
+//   }
+//   bot.fileStream(msg.file, function (err, ostream) {
+//     if (err) throw err;
+//     reply.action("typing");
+//     ostream.pipe(stream);
+//     ostream.on("end", function () {
+//       reply.html("File written: %s", file);
+//     });
+//   });
+// }
 
 // Status
 bot.command("status", function (msg, reply, next) {
@@ -309,84 +309,84 @@ bot.command("status", function (msg, reply, next) {
 });
 
 // Settings: Shell
-bot.command("shell", function (msg, reply, next) {
-  var arg = msg.args(1)[0];
-  if (arg) {
-    if (msg.context.command) {
-      var command = msg.context.command;
-      return reply.reply(command.initialMessage.id || msg).html("Can't change the shell while a command is running.");
-    }
-    try {
-      var shell = utils.resolveShell(arg);
-      msg.context.shell = shell;
-      reply.html("Shell changed.");
-    } catch (err) {
-      reply.html("Couldn't change the shell.");
-    }
-  } else {
-    var shell = msg.context.shell;
-    var otherShells = utils.shells.slice(0);
-    var idx = otherShells.indexOf(shell);
-    if (idx !== -1) otherShells.splice(idx, 1);
+// bot.command("shell", function (msg, reply, next) {
+//   var arg = msg.args(1)[0];
+//   if (arg) {
+//     if (msg.context.command) {
+//       var command = msg.context.command;
+//       return reply.reply(command.initialMessage.id || msg).html("Can't change the shell while a command is running.");
+//     }
+//     try {
+//       var shell = utils.resolveShell(arg);
+//       msg.context.shell = shell;
+//       reply.html("Shell changed.");
+//     } catch (err) {
+//       reply.html("Couldn't change the shell.");
+//     }
+//   } else {
+//     var shell = msg.context.shell;
+//     var otherShells = utils.shells.slice(0);
+//     var idx = otherShells.indexOf(shell);
+//     if (idx !== -1) otherShells.splice(idx, 1);
 
-    var content = "Current shell: " + escapeHtml(shell);
-    if (otherShells.length)
-      content += "\n\nOther shells:\n" + otherShells.map(escapeHtml).join("\n");
-    reply.html(content);
-  }
-});
+//     var content = "Current shell: " + escapeHtml(shell);
+//     if (otherShells.length)
+//       content += "\n\nOther shells:\n" + otherShells.map(escapeHtml).join("\n");
+//     reply.html(content);
+//   }
+// });
 
 // Settings: Working dir
-bot.command("cd", function (msg, reply, next) {
-  var arg = msg.args(1)[0];
-  if (arg) {
-    if (msg.context.command) {
-      var command = msg.context.command;
-      return reply.reply(command.initialMessage.id || msg).html("Can't change directory while a command is running.");
-    }
-    var newdir = path.resolve(msg.context.cwd, arg);
-    try {
-      fs.readdirSync(newdir);
-      msg.context.cwd = newdir;
-    } catch (err) {
-      return reply.html("%s", err);
-    }
-  }
+// bot.command("cd", function (msg, reply, next) {
+//   var arg = msg.args(1)[0];
+//   if (arg) {
+//     if (msg.context.command) {
+//       var command = msg.context.command;
+//       return reply.reply(command.initialMessage.id || msg).html("Can't change directory while a command is running.");
+//     }
+//     var newdir = path.resolve(msg.context.cwd, arg);
+//     try {
+//       fs.readdirSync(newdir);
+//       msg.context.cwd = newdir;
+//     } catch (err) {
+//       return reply.html("%s", err);
+//     }
+//   }
 
-  reply.html("Now at: %s", msg.context.cwd).then().then(function (m) {
-    msg.context.lastDirMessageId = m.id;
-  });
-});
+//   reply.html("Now at: %s", msg.context.cwd).then().then(function (m) {
+//     msg.context.lastDirMessageId = m.id;
+//   });
+// });
 
 // Settings: Environment
-bot.command("env", function (msg, reply, next) {
-  var env = msg.context.env, key = msg.args();
-  if (!key)
-    return reply.reply(msg).html("Use %s to see the value of a variable, or %s to change it.", "/env <name>", "/env <name>=<value>");
+// bot.command("env", function (msg, reply, next) {
+//   var env = msg.context.env, key = msg.args();
+//   if (!key)
+//     return reply.reply(msg).html("Use %s to see the value of a variable, or %s to change it.", "/env <name>", "/env <name>=<value>");
 
-  var idx = key.indexOf("=");
-  if (idx === -1) idx = key.indexOf(" ");
+//   var idx = key.indexOf("=");
+//   if (idx === -1) idx = key.indexOf(" ");
 
-  if (idx !== -1) {
-    if (msg.context.command) {
-      var command = msg.context.command;
-      return reply.reply(command.initialMessage.id || msg).html("Can't change the environment while a command is running.");
-    }
+//   if (idx !== -1) {
+//     if (msg.context.command) {
+//       var command = msg.context.command;
+//       return reply.reply(command.initialMessage.id || msg).html("Can't change the environment while a command is running.");
+//     }
 
-    var value = key.substring(idx + 1);
-    key = key.substring(0, idx).trim().replace(/\s+/g, " ");
-    if (value.length) env[key] = value;
-    else delete env[key];
-  }
+//     var value = key.substring(idx + 1);
+//     key = key.substring(0, idx).trim().replace(/\s+/g, " ");
+//     if (value.length) env[key] = value;
+//     else delete env[key];
+//   }
 
-  reply.reply(msg).text(printKey(key));
+//   reply.reply(msg).text(printKey(key));
 
-  function printKey(k) {
-    if (Object.hasOwnProperty.call(env, k))
-      return k + "=" + JSON.stringify(env[k]);
-    return k + " unset";
-  }
-});
+//   function printKey(k) {
+//     if (Object.hasOwnProperty.call(env, k))
+//       return k + "=" + JSON.stringify(env[k]);
+//     return k + " unset";
+//   }
+// });
 
 // Settings: Size
 bot.command("resize", function (msg, reply, next) {
